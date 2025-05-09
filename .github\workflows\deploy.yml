@@ -1,0 +1,32 @@
+name: Build and deploy streamlot app to ACR
+
+on:
+    push:
+        branches:
+            - dev
+
+env:
+    IMAGE_NAME: streamlit-project1
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v2
+
+            - name: Log in to Azure Container Registry
+              uses: azure/docker-login@v1
+              with:
+                login-server: ${{ secrets.ACR_LOGIN_SERVER }} # e.g., yourregistry.azurecr.io
+                username: ${{ secrets.ACR_USERNAME }}         # Service Principal ID or ACR admin username
+                password: ${{ secrets.ACR_PASSWORD }}
+
+            - name: Build Docker Image
+              run: |
+                docker build . -t ${{ secrets.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:dev-${{ github.sha }}
+                
+            - name: Push Docker image to ACR
+              run: |
+                docker push ${{ secrets.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:dev-${{ github.sha }}
+                
